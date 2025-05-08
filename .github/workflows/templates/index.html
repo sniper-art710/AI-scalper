@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Godzilla 1.2 - Trading Bot</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(to bottom right, #000000, #003300);
+      color: white;
+    }
+
+    .container {
+      max-width: 500px;
+      margin: 40px auto;
+      padding: 20px;
+      background: #111;
+      border: 2px solid gold;
+      border-radius: 20px;
+      box-shadow: 0 0 20px green;
+    }
+
+    h1 {
+      text-align: center;
+      color: limegreen;
+      font-size: 28px;
+    }
+
+    label {
+      display: block;
+      margin: 15px 0 5px;
+    }
+
+    input, select, button {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 15px;
+      border-radius: 10px;
+      border: none;
+      font-size: 16px;
+    }
+
+    input, select {
+      background: #222;
+      color: gold;
+    }
+
+    button {
+      background: green;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    button:hover {
+      background: #006600;
+    }
+
+    #statusIndicator {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-left: 10px;
+      background-color: red;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 14px;
+      color: gray;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Godzilla 1.2</h1>
+
+    <label for="accountNumber">Trading Account Number:</label>
+    <input type="text" id="accountNumber" placeholder="Enter trading account number" />
+
+    <label for="server">Broker Server:</label>
+    <input type="text" id="server" placeholder="Enter broker server" />
+
+    <label for="password">Account Password:</label>
+    <input type="password" id="password" placeholder="Enter password" />
+
+    <button id="connectBtn">Connect to Account</button>
+    <div>Connection Status: <span id="statusIndicator"></span></div>
+
+    <div id="formSection" class="hidden">
+      <label for="lotSize">Manual Lot Size:</label>
+      <input type="number" id="lotSize" placeholder="e.g., 0.01" />
+
+      <label for="symbol">Select Symbol:</label>
+      <select id="symbol">
+        <option value="EURUSD">EUR/USD</option>
+        <option value="GBPUSD">GBP/USD</option>
+        <option value="XAUUSD">Gold</option>
+        <option value="BTCUSD">Bitcoin</option>
+        <option value="AAPL">Apple</option>
+        <option value="NAS100">NAS100</option>
+      </select>
+
+      <label for="pin">Enter PIN:</label>
+      <input type="password" id="pin" placeholder="Enter your PIN" />
+
+      <button id="submitBtn">Submit Trade</button>
+    </div>
+
+    <div class="footer">
+      Created by Ntsako Khumalo
+    </div>
+  </div>
+
+  <script>
+    const connectBtn = document.getElementById('connectBtn');
+    const submitBtn = document.getElementById('submitBtn');
+    const formSection = document.getElementById('formSection');
+    const statusIndicator = document.getElementById('statusIndicator');
+
+    connectBtn.addEventListener('click', () => {
+      const account = document.getElementById('accountNumber').value;
+      const server = document.getElementById('server').value;
+      const password = document.getElementById('password').value;
+
+      if (!account || !server || !password) {
+        alert("Please fill in all connection fields.");
+        return;
+      }
+
+      fetch("/connect", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          login: account,
+          server_name: server,
+          password: password
+        }),
+      })
+        .then((res) => {
+          if (res.ok) {
+            statusIndicator.style.backgroundColor = "limegreen";
+            formSection.classList.remove("hidden");
+            alert("Connected successfully.");
+          } else {
+            throw new Error("Failed to connect.");
+          }
+        })
+        .catch(() => {
+          alert("Error connecting. Please check your credentials.");
+          statusIndicator.style.backgroundColor = "red";
+        });
+    });
+
+    submitBtn.addEventListener('click', () => {
+      const lotSize = document.getElementById('lotSize').value;
+      const symbol = document.getElementById('symbol').value;
+      const pin = document.getElementById('pin').value;
+
+      if (!lotSize || !symbol || !pin) {
+        alert("Please complete all fields before submitting.");
+        return;
+      }
+
+      fetch("/trade", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ lotSize, symbol, pin }),
+      })
+        .then((res) => {
+          if (res.ok) {
+            alert("Trade request submitted.");
+          } else {
+            throw new Error("Trade failed.");
+          }
+        })
+        .catch(() => {
+          alert("Failed to submit trade.");
+        });
+    });
+  </script>
+</body>
+</html>
