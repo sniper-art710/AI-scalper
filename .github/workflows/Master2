@@ -1,0 +1,111 @@
+import os
+import asyncio
+import pandas as pd
+from metaapi_cloud_sdk import MetaApi
+import nest_asyncio
+from ta.momentum import RSIIndicator                              Import RSI indicator from 'ta' library
+nest_asyncio.apply()''
+ MetaApi Token (you'll add your token here)
+metaapi_token = 'your_metaapi_token_here'
+
+ Main function to run the trading server
+async def main():
+    api = MetaApi(metaapi_token)
+
+    async def trading_logic(api, login, password, server_name, symbol, lot_size, num_trades):
+        account = await get_account(api, login, password, server_name)
+        if account:
+            await account.deploy()
+            await wait_for_connection(account)
+            connection = account.get_rpc_connection()
+            await connection.connect()
+            print(f"Placing {num_trades} trades on symbol: {symbol}, lot size: {lot_size}")
+                         for _ in range(num_trades):
+                detected_pattern = await detect_pattern(connection, symbol)
+                if detected_pattern:
+                    await place_trades(connection, detected_pattern, symbol, lot_size, "Joker1.0")
+                else:
+                    print("No valid pattern detected, skipping trade.")
+            await account.undeploy()
+
+    async def get_account(api, login, password, server_name):
+        accounts = await api.metatrader_account_api.get_accounts_with_infinite_scroll_pagination()
+        account = next((item for item in accounts if item.login == login and item.type.startswith('cloud')), None)
+        if not account:
+            print('Adding MT5 account to MetaApi')
+            account = await api.metatrader_account_api.create_account({
+                'name': 'Test account',
+                'type': 'cloud',
+                'login': 2074276081
+                'password': Kaybee1234!
+                'server': server
+                'platform': 'mt5',
+                'application': 'MetaApi',
+                'magic': 1000,
+            })
+        return account
+
+    async def wait_for_connection(account):
+        while True:
+            state = account.state
+            connection_status = account.connection_status
+            print(f'Account state: {state}, connection status: {connection_status}')
+            if state == 'DEPLOYED' and connection_status == 'CONNECTED':
+                break
+            await asyncio.sleep(5)
+        print('Account connected')
+
+    async def place_trades(connection, order_type, symbol, volume, comment):
+        try:
+            if order_type == "buy":
+                order = await connection.create_market_buy_order(symbol, volume)
+                print(f'Buy order successful: {order} - {comment}')
+            elif order_type == "sell":
+                order = await connection.create_market_sell_order(symbol, volume)
+                print(f'Sell order successful: {order} - {comment}')
+            else:
+                print('Invalid order type')
+        except Exception as e:
+            print(f"Error placing order: {str(e)}")
+
+    async def detect_pattern(connection, symbol):
+         Example: Fetch market data (for last 100 candles) and calculate RSI
+        candles = await connection.get_candles(symbol, '1h', limit=100)
+        if not candles:
+            print("Failed to retrieve market data.")
+            return None
+
+         Convert market data to DataFrame for analysis
+        df = pd.DataFrame([{
+            'time': candle['time'],
+            'close': candle['close']
+        } for candle in candles])
+
+         Calculate RSI (14-period)
+        rsi_indicator = RSIIndicator(close=df['close'], window=14)
+        df['rsi'] = rsi_indicator.rsi()
+
+         Get the latest RSI value
+        current_rsi = df['rsi'].iloc[-1]
+        print(f"Current RSI for {symbol}: {current_rsi}")
+
+         Define trading conditions based on RSI
+        if current_rsi < 30:
+            return 'buy'   Oversold condition
+        elif current_rsi > 70:
+            return 'sell'   Overbought condition
+        else:
+            return None   No trade signal
+
+    logn = 'your_login'
+    password = 'your_password'
+    server_name = 'your_server_name'
+    symbol = 'your_symbol'
+    lot_size = 0.1
+    num_trades = 10
+
+    await connect_account(api, login, password, server_name)
+    await trading_logic(api, login, password, server_name, symbol, lot_size, num_trades)
+
+ Run the app
+asyncio.run(main())
